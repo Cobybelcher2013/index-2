@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voxride — Your Voice. Your Drive.</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --vox-blue: #0078D4; --vox-blue-dark: #106EBE; --vox-blue-light: #00A8FF;
+  --vox-navy: #0A1628; --vox-bg: #EFF6FC;
+  --ms-gray1: #F3F2F1; --ms-gray2: #EDEBE9; --ms-gray3: #D2D0CE;
+  --ms-gray4: #A19F9D; --ms-gray5: #605E5C; --ms-gray6: #3B3A39; --ms-gray7: #201F1E;
+  --ms-white: #FFFFFF; --ms-red: #D13438; --ms-green: #107C10;
+  --topbar-height: 52px;
+}
+html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--ms-gray1); color: var(--ms-gray7); font-size: 14px; }
+
+/* OVERLAYS */
+.overlay { position: fixed; inset: 0; z-index: 200; background: rgba(255,255,255,0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 32px; }
+.overlay.hidden { display: none; }
+.vox-wordmark { font-family: 'Segoe UI', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: -1px; color: var(--vox-navy); }
+.vox-wordmark span { color: var(--vox-blue-light); }
+.vox-tagline { font-size: 12px; color: var(--ms-gray4); letter-spacing: 2px; text-transform: uppercase; }
+.overlay h2 { font-size: 22px; font-weight: 600; color: var(--ms-gray7); }
+.overlay p { font-size: 13px; color: var(--ms-gray5); max-width: 360px; line-height: 1.65; }
+.overlay small { font-size: 11px; color: var(--ms-gray4); max-width: 340px; line-height: 1.5; }
+.ms-btn { padding: 10px 24px; background: var(--vox-blue); color: #fff; font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 500; border: none; border-radius: 2px; cursor: pointer; transition: background 0.15s; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.ms-btn:hover { background: var(--vox-blue-dark); }
+.ms-btn.secondary { background: transparent; color: var(--vox-blue); border: 1px solid var(--vox-blue); }
+.ms-btn.secondary:hover { background: var(--vox-bg); }
+.ms-input { background: var(--ms-white); border: 1px solid var(--ms-gray3); border-radius: 2px; padding: 8px 12px; color: var(--ms-gray7); font-size: 14px; font-family: 'Segoe UI', sans-serif; outline: none; width: 100%; max-width: 380px; }
+.ms-input:focus { border-color: var(--vox-blue); box-shadow: 0 0 0 1px var(--vox-blue); }
+.ms-input::placeholder { color: var(--ms-gray4); }
+.error-msg { font-size: 12px; color: var(--ms-red); display: none; }
+.error-msg.show { display: block; }
+.skip-link { font-size: 12px; color: var(--vox-blue); cursor: pointer; }
+.skip-link:hover { text-decoration: underline; }
+.divider { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 380px; }
+.divider-line { flex: 1; height: 1px; background: var(--ms-gray3); }
+.divider span { font-size: 12px; color: var(--ms-gray4); }
+.disclaimer-box { background: #FFF4CE; border: 1px solid #FFB900; border-radius: 4px; padding: 12px 16px; max-width: 420px; text-align: left; }
+.disclaimer-box strong { color: #7D4F00; font-size: 13px; display: block; margin-bottom: 4px; }
+.disclaimer-box p { font-size: 12px; color: #5C3A00; line-height: 1.55; }
+.disclaimer-accept { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ms-gray6); cursor: pointer; margin-top: 8px; }
+
+/* Microsoft 365 connect button */
+.ms365-btn { display: flex; align-items: center; gap: 12px; padding: 12px 24px; background: var(--ms-white); border: 1px solid var(--ms-gray3); border-radius: 4px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-size: 14px; color: var(--ms-gray7); font-weight: 500; transition: all 0.15s; max-width: 320px; width: 100%; }
+.ms365-btn:hover { background: var(--ms-gray1); border-color: var(--ms-gray4); }
+.ms365-logo { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; width: 20px; height: 20px; flex-shrink: 0; }
+.ms365-logo div { border-radius: 1px; }
+
+/* Mic steps */
+.mic-steps { background: var(--ms-gray1); border: 1px solid var(--ms-gray3); border-radius: 4px; padding: 14px; max-width: 340px; text-align: left; }
+.mic-steps h4 { font-size: 13px; font-weight: 600; color: var(--ms-gray7); margin-bottom: 8px; }
+.step { display: flex; gap: 10px; margin-bottom: 7px; }
+.step:last-child { margin-bottom: 0; }
+.step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--vox-blue); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-text { font-size: 12px; color: var(--ms-gray5); line-height: 1.5; }
+.step-text strong { color: var(--ms-gray7); }
+
+/* SHELL */
+.shell { display: grid; grid-template-rows: var(--topbar-height) 1fr; height: 100vh; overflow: hidden; }
+
+/* TOPBAR */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--vox-navy); color: #fff; flex-shrink: 0; }
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.vox-icon-mini { width: 28px; height: 28px; background: var(--vox-blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.vox-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: #fff; }
+.vox-title span { color: var(--vox-blue-light); }
+.vox-subtitle-bar { font-size: 11px; color: rgba(255,255,255,0.5); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.api-status { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.2); }
+.api-status.live { background: rgba(16,124,16,0.35); border-color: rgba(16,124,16,0.5); color: #9FE1CB; }
+.ms365-status { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
+.ms365-status.connected { background: rgba(16,124,16,0.35); border-color: rgba(16,124,16,0.5); color: #9FE1CB; }
+.mode-toggle { display: flex; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); }
+.mode-btn { padding: 5px 12px; font-size: 11px; font-family: 'Segoe UI', sans-serif; border: none; background: transparent; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.15s; }
+.mode-btn.active { background: rgba(255,255,255,0.2); color: #fff; font-weight: 600; }
+.user-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--vox-blue); color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255,255,255,0.3); }
+
+/* BODY */
+.body { display: flex; flex-direction: column; overflow: hidden; height: 100%; }
+
+/* BANNERS */
+.driving-disclaimer { display: none; align-items: center; gap: 10px; padding: 7px 16px; background: #FFF4CE; border-bottom: 1px solid #FFB900; flex-shrink: 0; font-size: 12px; color: #5C3A00; }
+.driving-disclaimer.show { display: flex; }
+.driving-disclaimer strong { color: #7D4F00; }
+.passenger-disclaimer { display: none; align-items: center; gap: 10px; padding: 7px 16px; background: var(--vox-bg); border-bottom: 1px solid #C7E0F4; flex-shrink: 0; font-size: 12px; color: #004578; }
+.passenger-disclaimer.show { display: flex; }
+.connect-banner { display: none; align-items: center; gap: 10px; padding: 8px 16px; background: rgba(0,120,212,0.07); border-bottom: 1px solid rgba(0,120,212,0.2); flex-shrink: 0; font-size: 12px; color: var(--vox-blue); }
+.connect-banner.show { display: flex; }
+.connect-banner button { font-family: 'Segoe UI', sans-serif; font-size: 11px; padding: 4px 10px; background: var(--vox-blue); color: #fff; border: none; border-radius: 2px; cursor: pointer; white-space: nowrap; }
+
+/* EMAIL SECTION */
+.email-section { flex: 3; display: flex; flex-direction: column; overflow: hidden; background: var(--ms-white); border-bottom: 2px solid var(--ms-gray3); }
+.email-toolbar { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--ms-white); border-bottom: 1px solid var(--ms-gray3); flex-shrink: 0; }
+.email-toolbar-title { font-size: 16px; font-weight: 600; color: var(--ms-gray7); margin-right: 6px; }
+.etool-btn { display: flex; align-items: center; gap: 4px; padding: 5px 10px; font-size: 12px; font-family: 'Segoe UI', sans-serif; border: 1px solid var(--ms-gray3); border-radius: 2px; background: var(--ms-white); color: var(--ms-gray6); cursor: pointer; transition: background 0.1s; white-space: nowrap; }
+.etool-btn:hover { background: var(--ms-gray1); }
+.etool-btn.primary { background: var(--vox-blue); color: #fff; border-color: var(--vox-blue); }
+.etool-btn.primary:hover { background: var(--vox-blue-dark); }
+.etool-sep { width: 1px; height: 22px; background: var(--ms-gray3); margin: 0 2px; }
+.search-box { display: flex; align-items: center; gap: 6px; flex: 1; max-width: 280px; background: var(--ms-gray1); border: 1px solid var(--ms-gray3); border-radius: 2px; padding: 4px 10px; margin-left: auto; }
+.search-box input { background: transparent; border: none; outline: none; font-size: 12px; color: var(--ms-gray7); flex: 1; font-family: 'Segoe UI', sans-serif; }
+.email-body { display: flex; flex: 1; overflow: hidden; }
+.email-list { width: 300px; flex-shrink: 0; border-right: 1px solid var(--ms-gray3); overflow-y: auto; background: var(--ms-white); }
+.email-list::-webkit-scrollbar { width: 5px; }
+.email-list::-webkit-scrollbar-thumb { background: var(--ms-gray3); border-radius: 3px; }
+.email-item { padding: 10px 14px; border-bottom: 1px solid var(--ms-gray2); cursor: pointer; transition: background 0.1s; position: relative; }
+.email-item:hover { background: var(--ms-gray1); }
+.email-item.selected { background: var(--vox-bg); border-left: 3px solid var(--vox-blue); }
+.email-item.unread .email-sender { font-weight: 600; }
+.email-item.unread .email-subject { font-weight: 600; }
+.unread-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--vox-blue); position: absolute; left: 5px; top: 50%; transform: translateY(-50%); }
+.email-item-top { display: flex; justify-content: space-between; margin-bottom: 2px; }
+.email-sender { font-size: 12px; color: var(--ms-gray6); }
+.email-time { font-size: 11px; color: var(--ms-gray4); white-space: nowrap; }
+.email-subject { font-size: 12px; color: var(--ms-gray6); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.email-preview { font-size: 11px; color: var(--ms-gray4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.email-badges { display: flex; gap: 4px; margin-top: 3px; }
+.ebadge { font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 500; }
+.ebadge.urgent { background: #FDE7E9; color: var(--ms-red); }
+.ebadge.meeting { background: #E8F4FD; color: var(--vox-blue); }
+.ebadge.action { background: #FFF4CE; color: #7D6208; }
+.ebadge.fyi { background: var(--ms-gray1); color: var(--ms-gray5); }
+.email-pane { flex: 1; overflow-y: auto; padding: 20px 28px; background: var(--ms-white); }
+.email-pane::-webkit-scrollbar { width: 5px; }
+.email-pane::-webkit-scrollbar-thumb { background: var(--ms-gray3); border-radius: 3px; }
+.pane-subject { font-size: 19px; font-weight: 600; color: var(--ms-gray7); margin-bottom: 12px; line-height: 1.3; }
+.pane-meta { display: flex; align-items: flex-start; gap: 10px; }
+.sender-avatar { width: 38px; height: 38px; border-radius: 50%; color: #fff; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sender-name { font-size: 13px; font-weight: 600; color: var(--ms-gray7); }
+.sender-email-addr { font-size: 11px; color: var(--ms-gray4); margin-top: 1px; }
+.pane-time { font-size: 11px; color: var(--ms-gray4); white-space: nowrap; margin-left: auto; }
+.pane-divider { height: 1px; background: var(--ms-gray3); margin: 14px 0; }
+.pane-body { font-size: 13px; color: var(--ms-gray6); line-height: 1.7; }
+.pane-body p { margin-bottom: 10px; }
+.pane-actions { display: flex; gap: 8px; margin-top: 16px; }
+.empty-pane { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 10px; color: var(--ms-gray4); }
+.empty-pane-icon { font-size: 40px; opacity: 0.4; }
+
+/* Loading state */
+.loading-emails { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--ms-gray4); }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--ms-gray3); border-top-color: var(--vox-blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* CHAT SECTION */
+.chat-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--ms-white); min-height: 0; }
+.chat-header { display: flex; align-items: center; justify-content: space-between; padding: 6px 14px; background: var(--vox-navy); flex-shrink: 0; }
+.chat-header-left { display: flex; align-items: center; gap: 8px; }
+.chat-icon { width: 22px; height: 22px; border-radius: 50%; background: var(--vox-blue); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+.chat-title { font-size: 13px; font-weight: 600; color: #fff; }
+.chat-status-text { font-size: 11px; color: rgba(255,255,255,0.55); }
+.status-pill { font-size: 10px; padding: 2px 8px; border-radius: 10px; display: none; }
+.status-pill.listening { background: #FFF4CE; color: #7D4F00; display: inline; }
+.status-pill.speaking { background: #DFF6DD; color: var(--ms-green); display: inline; }
+.status-pill.thinking { background: var(--vox-bg); color: var(--vox-blue); display: inline; }
+.stop-btn { font-size: 10px; padding: 2px 8px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: rgba(255,255,255,0.8); cursor: pointer; font-family: 'Segoe UI', sans-serif; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; }
+.chat-messages::-webkit-scrollbar { width: 3px; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--ms-gray3); border-radius: 2px; }
+.msg { display: flex; gap: 7px; animation: fu 0.2s ease; }
+@keyframes fu { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+.msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.msg-av { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+.msg-av.ai { background: var(--vox-blue); color: #fff; }
+.msg-av.ai.speaking { animation: sp 0.55s ease-in-out infinite alternate; }
+@keyframes sp { from{transform:scale(1)} to{transform:scale(1.15)} }
+.msg-av.usr { background: var(--vox-navy); color: #fff; }
+.msg-content { display: flex; flex-direction: column; max-width: calc(100% - 70px); }
+.msg-bubble { padding: 7px 11px; border-radius: 4px; font-size: 13px; line-height: 1.5; }
+.msg.ai .msg-bubble { background: var(--ms-gray1); border: 1px solid var(--ms-gray3); color: var(--ms-gray7); border-top-left-radius: 0; }
+.msg.user .msg-bubble { background: var(--vox-blue); color: #fff; border-top-right-radius: 0; }
+.msg-time { font-size: 9px; color: var(--ms-gray4); margin-top: 2px; padding: 0 2px; }
+.msg.user .msg-time { text-align: right; }
+.speak-bar { display: none; align-items: flex-end; gap: 2px; height: 10px; padding: 0 2px; margin-top: 3px; }
+.speak-bar.active { display: flex; }
+.sw { width: 2px; border-radius: 2px; background: var(--vox-blue); }
+.sw:nth-child(1){animation:wv .8s ease-in-out infinite;height:4px}
+.sw:nth-child(2){animation:wv .8s ease-in-out infinite .1s;height:9px}
+.sw:nth-child(3){animation:wv .8s ease-in-out infinite .2s;height:6px}
+.sw:nth-child(4){animation:wv .8s ease-in-out infinite .15s;height:10px}
+.sw:nth-child(5){animation:wv .8s ease-in-out infinite .05s;height:5px}
+.sw:nth-child(6){animation:wv .8s ease-in-out infinite .25s;height:8px}
+.sw:nth-child(7){animation:wv .8s ease-in-out infinite .1s;height:5px}
+@keyframes wv{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}
+.typing-dots { display:flex; gap:3px; padding:7px 11px; background:var(--ms-gray1); border:1px solid var(--ms-gray3); border-radius:4px; border-top-left-radius:0; width:fit-content; }
+.td { width:4px; height:4px; border-radius:50%; background:var(--ms-gray4); animation:bo 1.2s ease-in-out infinite; }
+.td:nth-child(2){animation-delay:.2s} .td:nth-child(3){animation-delay:.4s}
+@keyframes bo{0%,80%,100%{transform:translateY(0);opacity:0.4}40%{transform:translateY(-4px);opacity:1}}
+.live-transcript { padding: 4px 14px; font-size: 12px; color: var(--vox-blue); font-style: italic; background: var(--vox-bg); border-top: 1px solid #C7E0F4; display: none; flex-shrink: 0; }
+.live-transcript.show { display: block; }
+.chat-input-area { padding: 6px 12px 8px; background: var(--ms-white); border-top: 1px solid var(--ms-gray3); flex-shrink: 0; }
+.chat-input-wrap { display: flex; gap: 7px; align-items: center; background: var(--ms-white); border: 1px solid var(--ms-gray3); border-radius: 4px; padding: 6px 7px 6px 12px; transition: border-color 0.15s; }
+.chat-input-wrap:focus-within { border-color: var(--vox-blue); box-shadow: 0 0 0 1px var(--vox-blue); }
+.chat-input-field { flex: 1; background: transparent; border: none; outline: none; color: var(--ms-gray7); font-family: 'Segoe UI', sans-serif; font-size: 13px; line-height: 1.4; resize: none; max-height: 60px; min-height: 20px; }
+.chat-input-field::placeholder { color: var(--ms-gray4); }
+.input-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.mic-btn { width: 36px; height: 36px; border-radius: 2px; border: 1px solid var(--vox-blue); background: var(--vox-bg); color: var(--vox-blue); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: all 0.15s; }
+.mic-btn:hover { background: var(--vox-blue); color: #fff; }
+.mic-btn.listening { background: var(--vox-blue); color: #fff; animation: rp 1s ease-in-out infinite; }
+.mic-btn:disabled { opacity: 0.35; cursor: not-allowed; animation: none; }
+@keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(0,120,212,0.4)}50%{box-shadow:0 0 0 6px rgba(0,120,212,0)}}
+.send-btn { width: 36px; height: 36px; border-radius: 2px; border: none; background: var(--vox-blue); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
+.send-btn:hover { background: var(--vox-blue-dark); }
+.send-btn:disabled { background: var(--ms-gray3); cursor: not-allowed; }
+.input-hint { font-size: 10px; color: var(--ms-gray4); text-align: center; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- SETUP: DISCLAIMER + API KEY -->
+<div class="overlay" id="overlaySetup">
+  <svg width="52" height="52" viewBox="0 0 56 56" fill="none">
+    <rect width="56" height="56" rx="14" fill="#0A1628"/>
+    <rect x="26" y="11" width="4" height="20" rx="2" fill="#00A8FF"/>
+    <rect x="20" y="17" width="4" height="14" rx="2" fill="#0078D4" opacity="0.7"/>
+    <rect x="32" y="17" width="4" height="14" rx="2" fill="#0078D4" opacity="0.7"/>
+    <rect x="14" y="21" width="4" height="9" rx="2" fill="#0078D4" opacity="0.35"/>
+    <rect x="38" y="21" width="4" height="9" rx="2" fill="#0078D4" opacity="0.35"/>
+    <circle cx="28" cy="31" r="3" fill="#00A8FF"/>
+    <line x1="28" y1="31" x2="22" y2="38" stroke="#1E3A5F" stroke-width="1.5"/>
+    <line x1="28" y1="31" x2="34" y2="38" stroke="#1E3A5F" stroke-width="1.5"/>
+  </svg>
+  <div class="vox-wordmark">Vox<span>ride</span></div>
+  <div class="vox-tagline">Your voice. Your drive.</div>
+
+  <div class="disclaimer-box">
+    <strong>⚠ Safety Disclaimer — Please Read</strong>
+    <p>Voxride's <strong>Passenger Mode</strong> displays emails on screen. This feature is for <strong>passengers only</strong> or when safely parked. Never read or interact with screen content while driving. Always comply with local road safety laws. Voxride accepts no liability for misuse while driving.</p>
+    <label class="disclaimer-accept">
+      <input type="checkbox" id="disclaimerCheck" onchange="checkDisclaimer()"/>
+      I have read and agree to the safety disclaimer
+    </label>
+  </div>
+
+  <input class="ms-input" id="apiKeyInput" type="password" placeholder="Paste Anthropic API key (sk-ant-...)" />
+  <div class="error-msg" id="apiError">Invalid key — must start with sk-ant-</div>
+  <button class="ms-btn" id="connectBtn" onclick="submitApiKey()" disabled style="opacity:0.5;cursor:not-allowed">Connect</button>
+  <small>Free $5 trial from console.anthropic.com · Key used this session only</small>
+  <div class="divider"><div class="divider-line"></div><span>or</span><div class="divider-line"></div></div>
+  <button class="ms-btn secondary" id="demoBtn" onclick="startDemo()" disabled style="opacity:0.5;cursor:not-allowed">Preview in Demo Mode</button>
+</div>
+
+<!-- SETUP: MIC -->
+<div class="overlay hidden" id="overlayMic">
+  <div class="vox-wordmark" style="font-size:22px">Vox<span>ride</span></div>
+  <h2>Enable microphone</h2>
+  <p>Voxride needs mic access to hear you and respond hands-free.</p>
+  <div class="mic-steps" id="safariSteps" style="display:none">
+    <h4>📱 Safari on iPhone / iPad</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Open <strong>Settings → Safari → Microphone</strong></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Set to <strong>Allow</strong></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Return here and tap <strong>Allow Microphone</strong></div></div>
+  </div>
+  <div class="mic-steps" id="safariMacSteps" style="display:none">
+    <h4>🖥 Safari on Mac</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Safari → Settings → Websites → Microphone → Allow</strong></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Return here and tap <strong>Allow Microphone</strong></div></div>
+  </div>
+  <button class="ms-btn" id="enableMicBtn" onclick="requestMic()">Allow Microphone</button>
+  <span class="skip-link" onclick="skipMic()">Continue without microphone — type only</span>
+</div>
+
+<!-- SETUP: MIC DENIED -->
+<div class="overlay hidden" id="overlayDenied">
+  <div class="vox-wordmark" style="font-size:22px">Vox<span>ride</span></div>
+  <h2>Microphone blocked</h2>
+  <div class="mic-steps" id="deniedIOS" style="display:none">
+    <h4>Safari on iPhone</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Settings → Safari → Microphone → Allow</strong></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Close and reopen this page</div></div>
+  </div>
+  <div class="mic-steps" id="deniedMac" style="display:none">
+    <h4>Safari on Mac</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Safari → Settings → Websites → Microphone → Allow</strong></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Refresh the page</div></div>
+  </div>
+  <div class="mic-steps" id="deniedChrome" style="display:none">
+    <h4>Chrome</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Click the <strong>lock icon</strong> in the address bar → Microphone → Allow</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Refresh the page</div></div>
+  </div>
+  <button class="ms-btn" onclick="retryMic()">Try Again</button>
+  <span class="skip-link" onclick="skipMic()">Continue without microphone</span>
+</div>
+
+<!-- MAIN APP -->
+<div class="shell">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="vox-icon-mini">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <rect x="8" y="2" width="2" height="9" rx="1" fill="#00A8FF"/>
+          <rect x="4" y="5" width="2" height="6" rx="1" fill="#0078D4" opacity="0.7"/>
+          <rect x="12" y="5" width="2" height="6" rx="1" fill="#0078D4" opacity="0.7"/>
+          <circle cx="9" cy="11" r="1.5" fill="#00A8FF"/>
+        </svg>
+      </div>
+      <div>
+        <div class="vox-title">Vox<span>ride</span></div>
+        <div class="vox-subtitle-bar">Your voice. Your drive.</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="api-status" id="apiStatus">Demo Mode</div>
+      <div class="ms365-status" id="ms365Status" onclick="connectMS365()">📧 Connect 365</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" onclick="setMode('drive',this)">🚗 Drive</button>
+        <button class="mode-btn" onclick="setMode('passenger',this)">👤 Passenger</button>
+        <button class="mode-btn" onclick="setMode('parked',this)">🅿 Parked</button>
+      </div>
+      <div class="user-avatar" id="userAvatar">TK</div>
+    </div>
+  </header>
+
+  <div class="body">
+    <div class="driving-disclaimer" id="drivingDisclaimer">
+      <span>⚠</span>
+      <span><strong>Drive Mode active.</strong> Email display is hidden for your safety. Voice only while driving.</span>
+    </div>
+    <div class="passenger-disclaimer" id="passengerDisclaimer">
+      <span>ℹ</span>
+      <span><strong>Passenger Mode.</strong> Only use screen features as a passenger or when safely parked.</span>
+    </div>
+    <div class="connect-banner" id="connectBanner">
+      <span>📧 Connect your Microsoft 365 work email to see real emails here.</span>
+      <button onclick="connectMS365()">Connect Now</button>
+    </div>
+
+    <!-- EMAIL TOP 3/4 -->
+    <div class="email-section" id="emailSection">
+      <div class="email-toolbar">
+        <span class="email-toolbar-title" id="inboxTitle">Inbox</span>
+        <button class="etool-btn primary">✉ New mail</button>
+        <button class="etool-btn">↩ Reply</button>
+        <button class="etool-btn">→ Forward</button>
+        <button class="etool-btn">🗑 Delete</button>
+        <div class="etool-sep"></div>
+        <button class="etool-btn" onclick="proc('Summarise my emails and tell me what needs urgent attention')">✨ Ask Voxride</button>
+        <div class="search-box">
+          <span style="color:#A19F9D;font-size:12px">🔍</span>
+          <input placeholder="Search mail" />
+        </div>
+      </div>
+      <div class="email-body">
+        <div class="email-list" id="emailList">
+          <div class="loading-emails" id="emailLoading" style="display:none">
+            <div class="spinner"></div>
+            <span style="font-size:13px">Loading your emails...</span>
+          </div>
+        </div>
+        <div class="email-pane" id="emailPane">
+          <div class="empty-pane">
+            <div class="empty-pane-icon">📭</div>
+            <p style="font-size:13px">Connect Microsoft 365 to view real emails</p>
+            <button class="etool-btn primary" onclick="connectMS365()" style="margin-top:8px">Connect Microsoft 365</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT BOTTOM 1/4 -->
+    <div class="chat-section">
+      <div class="chat-header">
+        <div class="chat-header-left">
+          <div class="chat-icon">V</div>
+          <span class="chat-title">Voxride AI</span>
+          <span class="chat-status-text" id="chatStatusText">Powered by Claude</span>
+          <span class="status-pill" id="statusPill"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="stop-btn" onclick="stopSpeaking()">■ Stop</button>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="msgs">
+        <div class="msg ai">
+          <div class="msg-av ai">V</div>
+          <div class="msg-content">
+            <div class="msg-bubble">G'day! I'm Voxride. Tap <strong>Connect 365</strong> in the top bar to link your work email, or ask me anything — I'm ready to help!</div>
+            <div class="msg-time">Just now</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="live-transcript" id="liveTranscript"></div>
+
+      <div class="chat-input-area">
+        <div class="chat-input-wrap">
+          <textarea class="chat-input-field" id="chatInput" placeholder="Ask Voxride anything, or tap the mic to speak..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <div class="input-actions">
+            <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎙</button>
+            <button class="send-btn" id="sendBtn" onclick="handleSend()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="input-hint">Tap 🎙 to speak · Type and Enter · Connect 365 for real emails</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BACKEND = 'https://project-snq25.vercel.app';
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isMac = /Macintosh/.test(navigator.userAgent) && !isIOS;
+const isChrome = /Chrome/.test(navigator.userAgent) && !/Edge/.test(navigator.userAgent);
+
+let apiKey='', demoMode=false, isProcessing=false, isListening=false;
+let voiceReady=false, micAllowed=false, recognition=null, chatHistory=[];
+let curAv=null, curWb=null, ms365Connected=false, realEmails=[];
+
+const SYSTEM = `You are Voxride AI — a smart, warm, natural voice-first productivity assistant for commuters. The user is a government employee in Adelaide, Australia.
+
+You have access to their Microsoft 365 email inbox (shown on screen above the chat). When they ask about emails, refer to what's actually in their inbox.
+
+CONTEXT: Traffic moderate, Port Road best route (~28 min). Weather 22°C partly cloudy.
+
+STYLE: Warm, conversational, like a mate sitting next to them. SHORT responses (2-4 sentences). Australian English. No bullet points. React naturally. Ask follow-ups.`;
+
+const DEMO_R = {
+  emails: "You've connected your Microsoft 365 email! I can now see your real inbox. Want me to summarise what needs urgent attention?",
+  summarise: "Looking at your inbox, I can see a few emails worth flagging. Want me to read through the most important ones for you while you drive?",
+  default: "Great question! With your Microsoft 365 connected, I can actually read and help you respond to your real emails. Try asking me to summarise your inbox or tell me about a specific email."
+};
+
+function getDR(t) {
+  if (t.includes('summar') || t.includes('unread') || t.includes('inbox') || t.includes('email')) return DEMO_R.summarise;
+  return DEMO_R.default;
+}
+
+// TTS
+const synth = window.speechSynthesis;
+let voices = [];
+function loadV() { voices = synth.getVoices(); }
+loadV();
+if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadV;
+
+function getBV() {
+  const pref = ['Daniel (Enhanced)','Aaron (Enhanced)','Arthur (Enhanced)','Gordon (Enhanced)','Daniel','Arthur','Gordon','Aaron','Google UK English Male','Alex'];
+  for (const n of pref) { const v = voices.find(v => v.name.includes(n)); if (v) return v; }
+  return voices.find(v => v.lang && v.lang.startsWith('en')) || voices[0] || null;
+}
+
+function speak(txt) {
+  if (!voiceReady || !synth) return;
+  synth.cancel();
+  if (!voices.length) loadV();
+  const u = new SpeechSynthesisUtterance(txt);
+  const v = getBV(); if (v) u.voice = v;
+  u.rate = 0.92; u.pitch = 0.95; u.volume = 1.0;
+  u.onstart = () => { setSt('speaking','Speaking...'); if(curAv)curAv.classList.add('speaking'); if(curWb)curWb.classList.add('active'); };
+  u.onend = u.onerror = () => { setSt('idle',''); if(curAv)curAv.classList.remove('speaking'); if(curWb)curWb.classList.remove('active'); };
+  synth.speak(u);
+  if (isChrome) { const t = setInterval(() => { if(synth.speaking){synth.pause();synth.resume();}else clearInterval(t); }, 9000); u.onend = u.onerror = () => { clearInterval(t); setSt('idle',''); if(curAv)curAv.classList.remove('speaking'); if(curWb)curWb.classList.remove('active'); }; }
+}
+
+function stopSpeaking() { synth.cancel(); setSt('idle',''); if(curAv)curAv.classList.remove('speaking'); if(curWb)curWb.classList.remove('active'); }
+
+function setSt(mode, txt) {
+  const pill = document.getElementById('statusPill');
+  const cs = document.getElementById('chatStatusText');
+  pill.className = 'status-pill';
+  if (mode === 'idle') { pill.style.display = 'none'; cs.textContent = 'Powered by Claude'; return; }
+  pill.className = `status-pill ${mode}`; pill.textContent = txt; cs.textContent = '';
+}
+
+// Speech Recognition
+function initRec() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { document.getElementById('micBtn').disabled = true; return; }
+  recognition = new SR(); recognition.continuous = false; recognition.interimResults = true; recognition.lang = 'en-AU';
+  recognition.onstart = () => { isListening = true; document.getElementById('micBtn').classList.add('listening'); setSt('listening','Listening...'); document.getElementById('liveTranscript').textContent = ''; document.getElementById('liveTranscript').classList.add('show'); };
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) { if (e.results[i].isFinal) final += e.results[i][0].transcript; else interim += e.results[i][0].transcript; }
+    const live = final || interim;
+    document.getElementById('liveTranscript').textContent = live ? `"${live}"` : '';
+    if (final.trim()) { document.getElementById('liveTranscript').classList.remove('show'); stopLUI(); proc(final.trim()); }
+  };
+  recognition.onerror = (e) => { stopLUI(); document.getElementById('liveTranscript').classList.remove('show'); if (e.error === 'not-allowed') { document.getElementById('micBtn').disabled = true; } setSt('idle',''); };
+  recognition.onend = () => { stopLUI(); };
+}
+
+function stopLUI() { isListening = false; document.getElementById('micBtn').classList.remove('listening'); if (!synth.speaking) setSt('idle',''); }
+function toggleMic() {
+  if (!recognition) { initRec(); if (!recognition) return; }
+  if (isProcessing) return;
+  if (isListening) { recognition.stop(); return; }
+  synth.cancel();
+  try { recognition.start(); } catch(e) {}
+}
+
+// Claude API
+async function callClaude(msg) {
+  // Build context from real emails if connected
+  let emailContext = '';
+  if (ms365Connected && realEmails.length > 0) {
+    emailContext = '\n\nCURRENT INBOX (real emails):\n' + realEmails.slice(0,10).map(e =>
+      `- From: ${e.from?.emailAddress?.name || 'Unknown'} | Subject: ${e.subject} | ${e.isRead ? 'Read' : 'UNREAD'} | ${new Date(e.receivedDateTime).toLocaleString()}`
+    ).join('\n');
+  }
+  chatHistory.push({ role: 'user', content: msg });
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey.trim(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 300, system: SYSTEM + emailContext, messages: chatHistory })
+    });
+  } catch(e) { chatHistory.pop(); throw new Error('Network error'); }
+  if (!res.ok) { let em = 'Error ' + res.status; try { const ed = await res.json(); if (ed.error?.message) em = ed.error.message; } catch(e) {} chatHistory.pop(); throw new Error(em); }
+  const data = await res.json(); const reply = data.content[0].text;
+  chatHistory.push({ role: 'assistant', content: reply }); return reply;
+}
+
+async function proc(txt) {
+  if (!txt.trim() || isProcessing) return;
+  isProcessing = true; document.getElementById('sendBtn').disabled = true; if (micAllowed) document.getElementById('micBtn').disabled = true;
+  addMsg('user', txt); setSt('thinking','Thinking...'); showTyp();
+  let reply;
+  try {
+    if (demoMode || !apiKey) { await new Promise(r => setTimeout(r, 600 + Math.random()*400)); reply = getDR(txt.toLowerCase()); }
+    else { reply = await callClaude(txt); }
+  } catch(e) { reply = 'Connection issue: ' + e.message; }
+  remTyp(); addMsg('ai', reply); isProcessing = false;
+  document.getElementById('sendBtn').disabled = false; if (micAllowed) document.getElementById('micBtn').disabled = false;
+  speak(reply);
+}
+
+function handleSend() { const i = document.getElementById('chatInput'); const t = i.value.trim(); if (!t) return; i.value = ''; autoResize(i); proc(t); }
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 60) + 'px'; }
+
+// Microsoft 365 Connection
+function connectMS365() {
+  window.open(`${BACKEND}/auth/login`, '_blank', 'width=500,height=600,scrollbars=yes');
+  // Poll for auth success
+  const check = setInterval(async () => {
+    try {
+      const res = await fetch(`${BACKEND}/api/auth-status`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.authenticated) {
+        clearInterval(check);
+        ms365Connected = true;
+        const statusEl = document.getElementById('ms365Status');
+        statusEl.textContent = `✅ ${data.email || 'Connected'}`;
+        statusEl.classList.add('connected');
+        document.getElementById('connectBanner').classList.remove('show');
+        document.getElementById('inboxTitle').textContent = `Inbox — ${data.email || 'Work'}`;
+        loadRealEmails();
+        addMsg('ai', `Connected! I can now see your real Microsoft 365 inbox for ${data.email}. Loading your emails now...`);
+        speak(`Connected! Loading your work emails now.`);
+      }
+    } catch(e) {}
+  }, 2000);
+  // Stop polling after 2 minutes
+  setTimeout(() => clearInterval(check), 120000);
+}
+
+async function loadRealEmails() {
+  const emailList = document.getElementById('emailList');
+  const loading = document.getElementById('emailLoading');
+  loading.style.display = 'flex';
+  emailList.innerHTML = '';
+  emailList.appendChild(loading);
+  try {
+    const res = await fetch(`${BACKEND}/api/emails`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to load emails');
+    realEmails = await res.json();
+    loading.style.display = 'none';
+    if (realEmails.length === 0) {
+      emailList.innerHTML = '<div style="padding:20px;text-align:center;color:#A19F9D;font-size:13px">No emails found</div>';
+      return;
+    }
+    realEmails.forEach((email, idx) => {
+      const item = document.createElement('div');
+      item.className = `email-item${!email.isRead ? ' unread' : ''}`;
+      const from = email.from?.emailAddress?.name || email.from?.emailAddress?.address || 'Unknown';
+      const preview = email.bodyPreview?.substring(0, 80) || '';
+      const time = new Date(email.receivedDateTime).toLocaleString('en-AU', { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
+      item.innerHTML = `
+        ${!email.isRead ? '<div class="unread-dot"></div>' : ''}
+        <div style="padding-left:${!email.isRead ? '8px' : '0'}">
+          <div class="email-item-top"><span class="email-sender">${escHtml(from)}</span><span class="email-time">${time}</span></div>
+          <div class="email-subject">${escHtml(email.subject || '(No subject)')}</div>
+          <div class="email-preview">${escHtml(preview)}</div>
+        </div>`;
+      item.onclick = () => showRealEmail(idx);
+      emailList.appendChild(item);
+    });
+    showRealEmail(0);
+  } catch(err) {
+    loading.style.display = 'none';
+    emailList.innerHTML = `<div style="padding:20px;text-align:center;color:#D13438;font-size:13px">Failed to load emails: ${err.message}</div>`;
+  }
+}
+
+function showRealEmail(idx) {
+  document.querySelectorAll('.email-item').forEach((el, i) => el.classList.toggle('selected', i === idx));
+  const email = realEmails[idx];
+  if (!email) return;
+  const from = email.from?.emailAddress?.name || 'Unknown';
+  const addr = email.from?.emailAddress?.address || '';
+  const time = new Date(email.receivedDateTime).toLocaleString('en-AU', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const initials = from.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+  const colors = ['#0078D4','#107C10','#5C2D91','#D83B01','#008272','#A19F9D','#CA5010','#00B7C3'];
+  const color = colors[idx % colors.length];
+  // Use body content if available, otherwise preview
+  const body = email.body?.content || email.bodyPreview || '';
+  const isHtml = email.body?.contentType === 'html';
+  document.getElementById('emailPane').innerHTML = `
+    <div class="pane-subject">${escHtml(email.subject || '(No subject)')}</div>
+    <div class="pane-meta">
+      <div class="sender-avatar" style="background:${color}">${initials}</div>
+      <div><div class="sender-name">${escHtml(from)}</div><div class="sender-email-addr">${escHtml(addr)}</div></div>
+      <div class="pane-time">${time}</div>
+    </div>
+    <div class="pane-divider"></div>
+    <div class="pane-body">${isHtml ? body : `<p>${escHtml(body).replace(/\n/g, '</p><p>')}</p>`}</div>
+    <div class="pane-actions">
+      <button class="etool-btn primary" onclick="proc('Help me draft a professional reply to this email from ${escHtml(from)} about: ${escHtml(email.subject || '')}')">✨ Draft reply with Voxride</button>
+      <button class="etool-btn">↩ Reply</button>
+      <button class="etool-btn">→ Forward</button>
+    </div>`;
+}
+
+function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function setMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+  const es = document.getElementById('emailSection');
+  document.getElementById('drivingDisclaimer').classList.remove('show');
+  document.getElementById('passengerDisclaimer').classList.remove('show');
+  if (mode === 'drive') {
+    es.style.display = 'none';
+    document.getElementById('drivingDisclaimer').classList.add('show');
+    proc("I'm driving now. Give me a quick voice briefing on what needs urgent attention.");
+  } else {
+    es.style.display = 'flex';
+    if (mode === 'passenger') document.getElementById('passengerDisclaimer').classList.add('show');
+    if (!ms365Connected) document.getElementById('connectBanner').classList.add('show');
+  }
+}
+
+// Check if returning from OAuth
+function checkAuthReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('auth') === 'success') {
+    ms365Connected = true;
+    document.getElementById('ms365Status').textContent = '✅ 365 Connected';
+    document.getElementById('ms365Status').classList.add('connected');
+    document.getElementById('connectBanner').classList.remove('show');
+    loadRealEmails();
+    history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
+// Messages
+function gt() { return new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }); }
+function addMsg(role, txt) {
+  const c = document.getElementById('msgs');
+  const div = document.createElement('div'); div.className = `msg ${role}`;
+  const av = document.createElement('div'); av.className = `msg-av ${role === 'ai' ? 'ai' : 'usr'}`; av.textContent = role === 'ai' ? 'V' : 'TK';
+  const co = document.createElement('div'); co.className = 'msg-content';
+  const b = document.createElement('div'); b.className = 'msg-bubble'; b.textContent = txt;
+  const ti = document.createElement('div'); ti.className = 'msg-time'; ti.textContent = gt();
+  co.appendChild(b); co.appendChild(ti);
+  let wb = null;
+  if (role === 'ai') { wb = document.createElement('div'); wb.className = 'speak-bar'; wb.innerHTML = '<div class="sw"></div>'.repeat(7); co.appendChild(wb); curAv = av; curWb = wb; }
+  div.appendChild(av); div.appendChild(co); c.appendChild(div); c.scrollTop = c.scrollHeight;
+}
+
+function showTyp() { const c = document.getElementById('msgs'); const d = document.createElement('div'); d.className = 'msg ai'; d.id = 'typ'; const a = document.createElement('div'); a.className = 'msg-av ai'; a.textContent = 'V'; const b = document.createElement('div'); b.className = 'typing-dots'; b.innerHTML = '<div class="td"></div><div class="td"></div><div class="td"></div>'; d.appendChild(a); d.appendChild(b); c.appendChild(d); c.scrollTop = c.scrollHeight; }
+function remTyp() { document.getElementById('typ')?.remove(); }
+
+// Setup flow
+function checkDisclaimer() {
+  const checked = document.getElementById('disclaimerCheck').checked;
+  ['connectBtn','demoBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    el.disabled = !checked; el.style.opacity = checked ? '1' : '0.5'; el.style.cursor = checked ? 'pointer' : 'not-allowed';
+  });
+}
+
+function showOv(id) { ['overlaySetup','overlayMic','overlayDenied'].forEach(o => document.getElementById(o).classList.toggle('hidden', o !== id)); }
+
+function submitApiKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k.startsWith('sk-')) { document.getElementById('apiError').classList.add('show'); return; }
+  apiKey = k; document.getElementById('apiStatus').textContent = '✦ Claude Live'; document.getElementById('apiStatus').classList.add('live');
+  goMic();
+}
+
+function startDemo() { demoMode = true; goMic(); }
+
+function goMic() {
+  const s = new SpeechSynthesisUtterance(''); s.volume = 0; synth.speak(s); voiceReady = true;
+  if (isSafari && isIOS) document.getElementById('safariSteps').style.display = 'block';
+  else if (isSafari && isMac) document.getElementById('safariMacSteps').style.display = 'block';
+  showOv('overlayMic');
+}
+
+function requestMic() {
+  document.getElementById('enableMicBtn').textContent = 'Requesting...';
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(s => { s.getTracks().forEach(t => t.stop()); micAllowed = true; initRec(); launch(); })
+    .catch(() => { micAllowed = false; showDenied(); });
+}
+
+function skipMic() { micAllowed = false; if (!recognition) initRec(); launch(); }
+
+function showDenied() {
+  if (isSafari && isIOS) document.getElementById('deniedIOS').style.display = 'block';
+  else if (isSafari && isMac) document.getElementById('deniedMac').style.display = 'block';
+  else document.getElementById('deniedChrome').style.display = 'block';
+  showOv('overlayDenied');
+}
+
+function retryMic() { ['deniedIOS','deniedMac','deniedChrome'].forEach(id => document.getElementById(id).style.display = 'none'); showOv('overlayMic'); document.getElementById('enableMicBtn').textContent = 'Allow Microphone'; }
+
+function launch() {
+  ['overlaySetup','overlayMic','overlayDenied'].forEach(o => document.getElementById(o).classList.add('hidden'));
+  if (!micAllowed) document.getElementById('micBtn').disabled = true;
+  document.getElementById('connectBanner').classList.add('show');
+  checkAuthReturn();
+  setTimeout(() => {
+    const g = "G'day! I'm Voxride. Tap Connect 365 in the top bar to link your Microsoft work email and I'll be able to see and help with your real inbox. Or just ask me anything!";
+    addMsg('ai', g); speak(g);
+  }, 300);
+}
+
+document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }));
+</script>
+</body>
+</html>
