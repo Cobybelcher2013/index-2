@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A1628">
+<title>Voxride</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#0A1628;--blue:#0066CC;--bl:#00A3FF;--glow:rgba(0,163,255,0.25);
+  --w:#fff;--g1:#F0F4F8;--g2:#C5D0DC;--g3:#8A9BB0;--g4:#4A5568;
+  --surface:rgba(255,255,255,0.06);--br:rgba(255,255,255,0.1);
+  --safe-t:env(safe-area-inset-top,44px);
+  --safe-b:env(safe-area-inset-bottom,20px);
+  --topbar:56px;--navbar:64px;
+}
+html,body{height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;background:var(--navy);color:var(--w);overflow:hidden;-webkit-font-smoothing:antialiased;font-size:15px}
+
+/* ── SETUP ── */
+.setup{position:fixed;inset:0;z-index:500;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px;padding:calc(var(--safe-t) + 16px) 20px calc(var(--safe-b) + 20px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.setup.gone{display:none}
+.logo-box{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:8px;margin-bottom:4px}
+.logo-ic{width:68px;height:68px;background:linear-gradient(135deg,#0066CC,#00A3FF);border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(0,163,255,0.35)}
+.logo-ic svg{width:38px;height:38px}
+.logo-nm{font-size:38px;font-weight:700;letter-spacing:-1.5px}
+.logo-nm em{color:#00A3FF;font-style:normal}
+.logo-tag{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--g3)}
+.disc{background:rgba(214,158,46,.08);border:1px solid rgba(214,158,46,.3);border-radius:16px;padding:14px 16px;width:100%;max-width:440px;text-align:left}
+.disc strong{color:#F6E05E;font-size:12px;display:block;margin-bottom:5px}
+.disc p{font-size:12px;color:rgba(255,255,255,.65);line-height:1.65}
+.disc label{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--g2);cursor:pointer;margin-top:10px;line-height:1.4}
+.disc input[type=checkbox]{width:18px;height:18px;accent-color:#00A3FF;flex-shrink:0;margin-top:1px}
+.fg{display:flex;flex-direction:column;gap:6px;width:100%;max-width:440px}
+.fl{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--g3);text-align:left;font-weight:500}
+.fi{background:rgba(255,255,255,.08);border:1.5px solid var(--br);border-radius:14px;padding:14px 16px;color:var(--w);font-size:16px;outline:none;width:100%;-webkit-appearance:none;font-family:inherit}
+.fi:focus{border-color:#00A3FF;box-shadow:0 0 0 3px rgba(0,163,255,.2)}
+.fi::placeholder{color:var(--g3)}
+.err{font-size:12px;color:#FC8181;text-align:left;display:none;padding-left:4px}
+.err.show{display:block}
+.bp{padding:16px;background:linear-gradient(135deg,#0066CC,#00A3FF);border:none;border-radius:16px;color:#fff;font-size:17px;font-weight:600;cursor:pointer;width:100%;max-width:440px;font-family:inherit;letter-spacing:-.2px}
+.bp:disabled{opacity:.4;cursor:not-allowed}
+.bs{padding:14px;background:rgba(255,255,255,.06);border:1.5px solid var(--br);border-radius:16px;color:var(--g2);font-size:15px;cursor:pointer;width:100%;max-width:440px;font-family:inherit}
+.bs:disabled{opacity:.4}
+.dvd{display:flex;align-items:center;gap:12px;width:100%;max-width:440px}
+.dvl{flex:1;height:1px;background:var(--br)}
+.htxt{font-size:12px;color:var(--g3);max-width:380px;line-height:1.7;text-align:center}
+.htxt a{color:#00A3FF;text-decoration:none}
+
+/* ── MIC OVERLAY ── */
+.mic-ov{position:fixed;inset:0;z-index:500;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px}
+.mic-ov.gone{display:none}
+.mic-ball{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#0066CC,#00A3FF);display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 0 60px rgba(0,163,255,.4);animation:pring 2s ease-in-out infinite}
+@keyframes pring{0%,100%{box-shadow:0 0 0 0 rgba(0,163,255,.4)}50%{box-shadow:0 0 0 20px transparent}}
+.mic-ttl{font-size:24px;font-weight:700;letter-spacing:-.5px}
+.mic-sub{font-size:15px;color:var(--g3);max-width:280px;text-align:center;line-height:1.6}
+.msteps{background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:16px;padding:16px;max-width:340px;width:100%;text-align:left}
+.msteps h4{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--w)}
+.sr{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start}
+.sn{width:22px;height:22px;border-radius:50%;background:#0066CC;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.st{font-size:13px;color:var(--g2);line-height:1.5}
+.skip{font-size:14px;color:#00A3FF;cursor:pointer;text-decoration:underline}
+
+/* ── APP SHELL ── */
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+.app.hidden{display:none}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--safe-t) + 6px) 16px 8px;background:rgba(10,22,40,.97);border-bottom:1px solid var(--br);flex-shrink:0;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.tl{display:flex;align-items:center;gap:10px}
+.ml{width:34px;height:34px;background:linear-gradient(135deg,#0066CC,#00A3FF);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ml svg{width:20px;height:20px}
+.bn{font-size:20px;font-weight:700;letter-spacing:-.8px}
+.bn em{color:#00A3FF;font-style:normal}
+.bsub{font-size:9px;color:var(--g3);letter-spacing:1.5px;text-transform:uppercase}
+.tr{display:flex;align-items:center;gap:6px}
+.chip{font-size:10px;padding:4px 9px;border-radius:20px;border:1px solid var(--br);color:var(--g3);background:var(--surface);white-space:nowrap;cursor:pointer;font-weight:500}
+.chip.live{border-color:rgba(56,161,105,.5);background:rgba(56,161,105,.12);color:#68D391}
+.chip.elon{border-color:rgba(0,163,255,.5);background:rgba(0,163,255,.12);color:#00A3FF}
+.chip.outon{border-color:rgba(0,120,212,.5);background:rgba(0,120,212,.12);color:#60BDFF}
+
+/* CONTENT */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* ── DRIVE MODE ── */
+.drive-view{display:none;flex:1;flex-direction:column;align-items:center;justify-content:space-between;padding:30px 24px calc(var(--safe-b) + 16px);background:radial-gradient(ellipse at 50% 40%, rgba(0,102,204,.1) 0%, transparent 65%)}
+.drive-view.show{display:flex}
+.drive-top{display:flex;flex-direction:column;align-items:center;gap:20px;flex:1;justify-content:center}
+.orb-wrap{position:relative;width:180px;height:180px}
+.or{position:absolute;inset:0;border-radius:50%;border:1.5px solid #00A3FF;opacity:0}
+.or.a{animation:rng 2.5s ease-out infinite}
+.or.b{animation:rng 2.5s ease-out infinite .85s}
+.or.c{animation:rng 2.5s ease-out infinite 1.7s}
+@keyframes rng{0%{transform:scale(.55);opacity:.7}100%{transform:scale(1.5);opacity:0}}
+.orb{position:absolute;inset:20px;border-radius:50%;background:linear-gradient(135deg,#0066CC,#00A3FF);display:flex;align-items:center;justify-content:center;box-shadow:0 0 60px rgba(0,163,255,.35);cursor:pointer;transition:transform .15s}
+.orb:active{transform:scale(.93)}
+.orb svg{width:44px;height:44px}
+.orb.ls{animation:ols .5s ease-in-out infinite alternate}
+.orb.sp{animation:osp .55s ease-in-out infinite alternate}
+@keyframes ols{from{box-shadow:0 0 40px rgba(0,163,255,.35)}to{box-shadow:0 0 90px rgba(0,163,255,.75)}}
+@keyframes osp{from{transform:scale(1)}to{transform:scale(1.07)}}
+.dst-wrap{text-align:center}
+.dst-big{font-size:24px;font-weight:700;letter-spacing:-.5px;color:var(--w);display:block;margin-bottom:5px}
+.dst-sub{font-size:14px;color:var(--g3)}
+.wbs{display:flex;align-items:flex-end;gap:4px;height:28px;opacity:0;transition:opacity .3s;margin-top:4px;justify-content:center}
+.wbs.show{opacity:1}
+.wb{width:4px;border-radius:4px;background:#00A3FF}
+.wb:nth-child(1){animation:wba .8s ease-in-out infinite;height:6px}
+.wb:nth-child(2){animation:wba .8s ease-in-out infinite .1s;height:18px}
+.wb:nth-child(3){animation:wba .8s ease-in-out infinite .2s;height:11px}
+.wb:nth-child(4){animation:wba .8s ease-in-out infinite .15s;height:22px}
+.wb:nth-child(5){animation:wba .8s ease-in-out infinite .05s;height:8px}
+.wb:nth-child(6){animation:wba .8s ease-in-out infinite .25s;height:15px}
+.wb:nth-child(7){animation:wba .8s ease-in-out infinite .1s;height:8px}
+@keyframes wba{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+.tbub{background:rgba(255,255,255,.07);border:1px solid var(--br);border-radius:16px;padding:12px 18px;font-size:13px;color:var(--g2);font-style:italic;max-width:85%;text-align:center;display:none;line-height:1.5}
+.tbub.show{display:block}
+.last-box{background:rgba(0,163,255,.08);border:1px solid rgba(0,163,255,.2);border-radius:16px;padding:14px 16px;width:100%;max-width:360px;display:none}
+.last-box.show{display:block}
+.last-lbl{font-size:10px;color:#00A3FF;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+.last-txt{font-size:15px;color:var(--w);line-height:1.6}
+/* Drive mode hint */
+.drive-hint{font-size:12px;color:var(--g3);letter-spacing:.5px;text-align:center}
+
+/* ── PASSENGER/PARKED ── */
+.pass-view{display:none;flex:1;flex-direction:column;overflow:hidden}
+.pass-view.show{display:flex}
+
+/* Segment tabs */
+.seg-bar{display:flex;padding:8px 12px 0;gap:0;flex-shrink:0}
+.seg-tab{flex:1;padding:10px 8px;font-size:13px;font-weight:600;border:none;background:transparent;color:var(--g3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:inherit;text-align:center}
+.seg-tab.active{color:var(--w);border-bottom-color:#00A3FF}
+
+/* Email list view */
+.email-view{display:flex;flex:1;flex-direction:column;overflow:hidden}
+.email-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--br);flex-shrink:0}
+.email-hdr-title{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.email-hdr-btns{display:flex;gap:8px}
+.ehb{padding:7px 13px;font-size:12px;font-weight:600;border-radius:10px;border:1px solid var(--br);background:var(--surface);color:var(--g2);cursor:pointer;font-family:inherit}
+.ehb.primary{background:linear-gradient(135deg,rgba(0,102,204,.5),rgba(0,163,255,.5));border-color:rgba(0,163,255,.4);color:#60BDFF}
+
+/* Outlook-style email list */
+.elist{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.elist::-webkit-scrollbar{display:none}
+.eitem{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .1s;position:relative}
+.eitem:active{background:rgba(255,255,255,.05)}
+.eitem.sel{background:rgba(0,163,255,.08);border-left:3px solid #00A3FF}
+.eitem.unread .esubj{font-weight:700;color:var(--w)}
+.eitem.unread .esend{font-weight:700;color:var(--w)}
+/* Sender avatar circle */
+.eavatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.einfo{flex:1;min-width:0}
+.etop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px}
+.esend{font-size:14px;color:var(--g2);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
+.etime{font-size:12px;color:var(--g3);white-space:nowrap;flex-shrink:0}
+.esubj{font-size:14px;color:var(--g2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.eprev{font-size:13px;color:var(--g3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.udot{width:8px;height:8px;border-radius:50%;background:#00A3FF;position:absolute;left:6px;top:50%;transform:translateY(-50%)}
+.no-email{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;padding:40px 24px;text-align:center}
+.no-email svg{opacity:.3}
+.no-email p{font-size:14px;color:var(--g3);line-height:1.6;max-width:240px}
+
+/* Email reading pane (slides in) */
+.epane{position:absolute;inset:0;background:var(--navy);display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:10}
+.epane.show{transform:translateX(0)}
+.epane-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--br);flex-shrink:0}
+.back-btn{display:flex;align-items:center;gap:4px;color:#00A3FF;font-size:15px;font-weight:500;cursor:pointer;padding:4px 0;font-family:inherit;background:none;border:none}
+.back-btn svg{width:20px;height:20px}
+.epane-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+.epane::-webkit-scrollbar{display:none}
+.eread-subj{font-size:20px;font-weight:700;letter-spacing:-.3px;color:var(--w);line-height:1.3;margin-bottom:14px}
+.eread-meta{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.eread-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.eread-from{font-size:14px;font-weight:600;color:var(--w)}
+.eread-addr{font-size:12px;color:var(--g3);margin-top:2px}
+.eread-time{font-size:12px;color:var(--g3);margin-left:auto;text-align:right}
+.ediv{height:1px;background:var(--br);margin-bottom:16px}
+.eread-body{font-size:15px;color:var(--g2);line-height:1.75;white-space:pre-wrap}
+.eread-acts{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;padding-bottom:20px}
+.era-btn{padding:11px 18px;font-size:14px;font-weight:600;border-radius:12px;border:1px solid var(--br);background:var(--surface);color:var(--g2);cursor:pointer;font-family:inherit}
+.era-btn.prim{background:linear-gradient(135deg,#0066CC,#00A3FF);border-color:transparent;color:#fff}
+
+/* Chat view */
+.chat-view{display:none;flex:1;flex-direction:column;overflow:hidden}
+.chat-view.show{display:flex}
+.msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px;display:flex;flex-direction:column;gap:10px}
+.msgs::-webkit-scrollbar{display:none}
+.msg{display:flex;gap:8px;animation:min .2s ease}
+@keyframes min{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{flex-direction:row-reverse}
+.mav{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.mav.ai{background:linear-gradient(135deg,#0066CC,#00A3FF)}
+.mav.ai.sp{animation:avsp .5s ease-in-out infinite alternate}
+@keyframes avsp{from{transform:scale(1)}to{transform:scale(1.2)}}
+.mav.usr{background:rgba(255,255,255,.14)}
+.mc{display:flex;flex-direction:column;max-width:78%}
+.mb{padding:10px 14px;border-radius:18px;font-size:15px;line-height:1.5}
+.msg.ai .mb{background:rgba(255,255,255,.08);border:1px solid var(--br);color:var(--w);border-top-left-radius:4px}
+.msg.user .mb{background:linear-gradient(135deg,#0066CC,#00A3FF);color:#fff;border-top-right-radius:4px}
+.mt{font-size:10px;color:var(--g3);margin-top:4px;padding:0 4px}
+.msg.user .mt{text-align:right}
+.trow{display:flex;gap:5px;padding:10px 14px;background:rgba(255,255,255,.08);border:1px solid var(--br);border-radius:18px;border-top-left-radius:4px;width:fit-content}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--g3);animation:dta 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes dta{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-5px);opacity:1}}
+.live{padding:5px 14px;font-size:13px;color:#00A3FF;font-style:italic;background:rgba(0,163,255,.05);border-top:1px solid rgba(0,163,255,.1);display:none;flex-shrink:0}
+.live.show{display:block}
+
+/* ── INPUT BAR ── */
+.input-bar{padding:10px 14px calc(var(--safe-b) + 10px);background:rgba(10,22,40,.97);border-top:1px solid var(--br);flex-shrink:0;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.input-row{display:flex;align-items:flex-end;gap:10px}
+.ifield{flex:1;background:rgba(255,255,255,.08);border:1.5px solid var(--br);border-radius:22px;padding:12px 18px;color:var(--w);font-size:16px;font-family:inherit;outline:none;resize:none;min-height:46px;max-height:100px;line-height:1.4;-webkit-appearance:none}
+.ifield:focus{border-color:#00A3FF}
+.ifield::placeholder{color:var(--g3)}
+/* Big mic button */
+.mic-big{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0066CC,#00A3FF);border:none;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-shadow:0 4px 18px rgba(0,163,255,.3);transition:transform .15s}
+.mic-big:active{transform:scale(.9)}
+.mic-big.on{background:linear-gradient(135deg,#C53030,#E53E3E);animation:mpa .9s ease-in-out infinite}
+.mic-big:disabled{opacity:.4;background:var(--g4);box-shadow:none;cursor:not-allowed;animation:none}
+@keyframes mpa{0%,100%{box-shadow:0 4px 18px rgba(229,62,62,.3)}50%{box-shadow:0 4px 30px rgba(229,62,62,.6)}}
+.send-b{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#0066CC,#00A3FF);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.send-b:active{transform:scale(.9)}
+.send-b:disabled{background:var(--g4);cursor:not-allowed}
+.stop-row{display:flex;justify-content:center;margin-top:8px}
+.stop-pill{padding:6px 20px;background:rgba(229,62,62,.12);border:1px solid rgba(229,62,62,.35);border-radius:20px;color:#FC8181;font-size:13px;cursor:pointer;font-family:inherit;display:none;align-items:center;gap:6px}
+.stop-pill.show{display:flex}
+
+/* ── BOTTOM NAV ── */
+.bot-nav{display:flex;padding:0 8px calc(var(--safe-b) + 4px);background:rgba(10,22,40,.97);border-top:1px solid var(--br);flex-shrink:0}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:none;background:transparent;color:var(--g3);cursor:pointer;font-family:inherit;font-size:10px;font-weight:500;border-radius:12px;transition:all .15s}
+.nb .ni{font-size:22px;line-height:1;transition:transform .15s}
+.nb.active{color:#00A3FF}
+.nb.active .ni{transform:scale(1.1)}
+
+/* spinner */
+.spin{width:24px;height:24px;border:2.5px solid var(--br);border-top-color:#00A3FF;border-radius:50%;animation:sp .7s linear infinite;margin:auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ── SETUP ── -->
+<div class="setup" id="setup">
+  <div class="logo-box">
+    <div class="logo-ic">
+      <svg viewBox="0 0 38 38" fill="none">
+        <rect x="17" y="3" width="4" height="19" rx="2" fill="white"/>
+        <rect x="10" y="8" width="4" height="13" rx="2" fill="white" opacity=".6"/>
+        <rect x="24" y="8" width="4" height="13" rx="2" fill="white" opacity=".6"/>
+        <rect x="3" y="13" width="4" height="8" rx="2" fill="white" opacity=".3"/>
+        <rect x="31" y="13" width="4" height="8" rx="2" fill="white" opacity=".3"/>
+        <circle cx="19" cy="22" r="3" fill="white"/>
+        <line x1="19" y1="22" x2="12" y2="32" stroke="white" stroke-width="1.5" opacity=".4"/>
+        <line x1="19" y1="22" x2="26" y2="32" stroke="white" stroke-width="1.5" opacity=".4"/>
+      </svg>
+    </div>
+    <div class="logo-nm">Vox<em>ride</em></div>
+    <div class="logo-tag">Your Voice. Your Drive.</div>
+  </div>
+
+  <div class="disc">
+    <strong>⚠ Safety Disclaimer</strong>
+    <p>Voxride is designed for hands-free use while driving. Never interact with screen content while the vehicle is in motion. Passenger Mode and email display are for passengers only or when safely parked. Always comply with Australian road safety laws. Voxride accepts no liability for misuse while driving.</p>
+    <label><input type="checkbox" id="dc" onchange="chkD()"/> I have read and agree to the safety disclaimer</label>
+  </div>
+
+  <div class="fg">
+    <div class="fl">Anthropic API Key (Claude AI)</div>
+    <input class="fi" id="ak" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false"/>
+    <div class="err" id="ae">Must start with sk-ant-</div>
+  </div>
+
+  <div class="fg">
+    <div class="fl">ElevenLabs API Key (Matilda's Voice)</div>
+    <input class="fi" id="ek" type="password" placeholder="Your ElevenLabs key..." autocomplete="off" spellcheck="false"/>
+    <div class="err" id="ee">Please enter your ElevenLabs key</div>
+  </div>
+
+  <button class="bp" id="cb" onclick="doConnect()" disabled>🚗 Start Voxride</button>
+  <div class="dvd"><div class="dvl"></div><span style="font-size:12px;color:var(--g3)">or</span><div class="dvl"></div></div>
+  <button class="bs" id="db" onclick="doDemo()" disabled>Try Demo Mode</button>
+  <div class="htxt">Keys stay on your device only — never stored or shared.<br>
+  Get keys free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a></div>
+</div>
+
+<!-- ── MIC OVERLAY ── -->
+<div class="mic-ov gone" id="micOv">
+  <div class="logo-nm">Vox<em style="color:#00A3FF;font-style:normal">ride</em></div>
+  <div class="mic-ball">🎙</div>
+  <div class="mic-ttl">Enable microphone</div>
+  <div class="mic-sub">Voxride listens and responds with Matilda's Australian voice — perfect for your commute.</div>
+  <div class="msteps" id="safStp" style="display:none">
+    <h4>📱 Safari on iPhone / iPad</h4>
+    <div class="sr"><div class="sn">1</div><div class="st">Settings → Safari → Microphone → Allow</div></div>
+    <div class="sr"><div class="sn">2</div><div class="st">Return here and tap Allow Microphone</div></div>
+  </div>
+  <div class="msteps" id="chrStp" style="display:none">
+    <h4>🖥 Chrome</h4>
+    <div class="sr"><div class="sn">1</div><div class="st">Tap the lock icon → Microphone → Allow</div></div>
+  </div>
+  <button class="bp" id="ambtn" onclick="reqMic()" style="max-width:320px">Allow Microphone</button>
+  <span class="skip" onclick="skipMic()">Skip — type only mode</span>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div class="app hidden" id="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="tl">
+      <div class="ml">
+        <svg viewBox="0 0 20 20" fill="none">
+          <rect x="9" y="1" width="2" height="11" rx="1" fill="white"/>
+          <rect x="5" y="4" width="2" height="8" rx="1" fill="white" opacity=".6"/>
+          <rect x="13" y="4" width="2" height="8" rx="1" fill="white" opacity=".6"/>
+          <circle cx="10" cy="12" r="2" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <div class="bn">Vox<em>ride</em></div>
+        <div class="bsub">Your voice. Your drive.</div>
+      </div>
+    </div>
+    <div class="tr">
+      <div class="chip" id="cChip">Demo</div>
+      <div class="chip" id="eChip">🎙 Browser</div>
+      <div class="chip" id="oChip" onclick="connectOutlook()">📧 Outlook</div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content" id="content">
+
+    <!-- DRIVE VIEW -->
+    <div class="drive-view show" id="driveV">
+      <div class="drive-top">
+        <div class="orb-wrap">
+          <div class="or a"></div><div class="or b"></div><div class="or c"></div>
+          <div class="orb" id="orb" onclick="togMic()">
+            <svg viewBox="0 0 36 36" fill="none">
+              <path d="M18 6C15.79 6 14 7.79 14 10V18C14 20.21 15.79 22 18 22C20.21 22 22 20.21 22 18V10C22 7.79 20.21 6 18 6Z" fill="white"/>
+              <path d="M26 18C26 22.42 22.42 26 18 26C13.58 26 10 22.42 10 18H8C8 23.52 11.93 28.12 17 28.9V32H19V28.9C24.07 28.12 28 23.52 28 18H26Z" fill="white" opacity=".75"/>
+            </svg>
+          </div>
+        </div>
+        <div class="dst-wrap">
+          <span class="dst-big" id="dstTxt">Tap to speak</span>
+          <div class="dst-sub" id="dsubTxt">Matilda is ready</div>
+          <div class="wbs" id="wbs">
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+          </div>
+        </div>
+        <div class="tbub" id="tbub"></div>
+        <div class="last-box" id="lastBox">
+          <div class="last-lbl">Matilda said</div>
+          <div class="last-txt" id="lastTxt"></div>
+        </div>
+      </div>
+      <div class="drive-hint">🎙 Tap the orb to speak · Voice only while driving</div>
+    </div>
+
+    <!-- PASSENGER/PARKED VIEW -->
+    <div class="pass-view" id="passV">
+      <!-- Segment tabs -->
+      <div class="seg-bar">
+        <button class="seg-tab active" id="segE" onclick="showSeg('email')">📧 Inbox</button>
+        <button class="seg-tab" id="segC" onclick="showSeg('chat')">💬 Matilda</button>
+      </div>
+
+      <!-- EMAIL VIEW -->
+      <div class="email-view" id="emailV">
+        <div class="email-hdr">
+          <div class="email-hdr-title" id="inboxTitle">Outlook Inbox</div>
+          <div class="email-hdr-btns">
+            <button class="ehb" id="refreshB" onclick="loadEmails()" style="display:none">↻ Refresh</button>
+            <button class="ehb primary" id="connectB" onclick="connectOutlook()">Connect</button>
+            <button class="ehb" id="askB" onclick="askEmails()" style="display:none">✨ Ask</button>
+          </div>
+        </div>
+        <div style="flex:1;overflow:hidden;position:relative">
+          <div class="elist" id="elist">
+            <div class="no-email" id="noEmail">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <p>Connect your personal Outlook to see your emails here</p>
+              <button class="ehb primary" onclick="connectOutlook()" style="margin-top:8px;padding:10px 20px">Connect Outlook</button>
+            </div>
+          </div>
+          <!-- Reading pane (slides in over list) -->
+          <div class="epane" id="epane">
+            <div class="epane-hdr">
+              <button class="back-btn" onclick="closePane()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Inbox
+              </button>
+            </div>
+            <div class="epane-body" id="epaneBody"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT VIEW -->
+      <div class="chat-view" id="chatV">
+        <div class="msgs" id="msgs"></div>
+        <div class="live" id="liveBar"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INPUT BAR -->
+  <div class="input-bar">
+    <div class="input-row">
+      <textarea class="ifield" id="inp" placeholder="Ask Matilda..." rows="1" onkeydown="hkey(event)" oninput="agrow(this)"></textarea>
+      <button class="mic-big" id="micB" onclick="togMic()">🎙</button>
+      <button class="send-b" id="sendB" onclick="doSend()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="stop-row">
+      <button class="stop-pill" id="stopPill" onclick="stopSpk()">■ Stop Matilda</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bot-nav">
+    <button class="nb active" id="nbDrive" onclick="setMode('drive',this)">
+      <span class="ni">🚗</span>Drive
+    </button>
+    <button class="nb" id="nbPass" onclick="setMode('passenger',this)">
+      <span class="ni">👤</span>Passenger
+    </button>
+    <button class="nb" id="nbPark" onclick="setMode('parked',this)">
+      <span class="ni">🅿️</span>Parked
+    </button>
+  </nav>
+</div>
+
+<script>
+const BACKEND='https://project-snq25.vercel.app';
+const VOICE_ID='XrExE9yKIg1WjnnlVkGX'; // Matilda
+const isSaf=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+const isChrome=/Chrome/.test(navigator.userAgent)&&!/Edge/.test(navigator.userAgent);
+
+let AK='',EK='',isDemo=false,hasMic=false,isListen=false,isProc=false;
+let recog=null,hist=[],curAu=null,curAv=null;
+let olToken='',olEmail='',emails=[];
+const COLORS=['#0078D4','#107C10','#5C2D91','#D83B01','#008272','#CA5010','#00B7C3','#8764B8'];
+
+const SYS=`You are Matilda — Voxride's warm, smart AI voice assistant for Australian commuters. Riding with Chris Belcher in Adelaide, SA. Port Road commute ~28 min.
+
+STYLE: Warm, natural Australian English. SHORT — 2-4 sentences max. No bullet points. Conversational. Genuine reactions.
+
+HELP WITH: Commute briefings, Adelaide traffic/weather, email summaries, drafting messages, day planning, general knowledge.`;
+
+function gDR(t){
+  t=t.toLowerCase();
+  if(/email|inbox|mail|outlook/.test(t))return "I can see Outlook isn't connected yet — tap the Inbox tab and hit Connect to link your personal Outlook account!";
+  if(/traffic|commute|port road|drive/.test(t))return "Port Road is looking pretty typical — allow about 28-30 minutes. Usual peak hour near the city but nothing major!";
+  if(/weather|rain|sun|hot|cold|degrees/.test(t))return "Adelaide's looking lovely — partly cloudy, around 21 degrees. Perfect commute weather!";
+  if(/hello|hi |hey|morning|afternoon|g'day/i.test(t))return "G'day Chris! Ready for the commute? Traffic's alright on Port Road today. What do you need?";
+  if(/help|what can|what do/.test(t))return "I can help with your commute, emails, day planning, drafting messages — pretty much anything you need on the road. Just ask!";
+  return "G'day! I'm Matilda, your Voxride AI companion. Tap the mic button or type to chat. Switch to Passenger Mode to connect your Outlook emails!";
+}
+
+// ── ElevenLabs TTS ──
+async function speakEL(txt){
+  if(!EK||isDemo){spkBr(txt);return;}
+  stopSpk();
+  try{
+    setOrb('speaking');
+    const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`,{
+      method:'POST',
+      headers:{'Accept':'audio/mpeg','Content-Type':'application/json','xi-api-key':EK},
+      body:JSON.stringify({text:txt,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.82,style:0.2,use_speaker_boost:true}})
+    });
+    if(!r.ok)throw new Error(r.status);
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    curAu=new Audio(url);
+    curAu.onended=()=>{setOrb('idle');document.getElementById('stopPill').classList.remove('show');if(curAv)curAv.classList.remove('sp');};
+    curAu.onerror=()=>{setOrb('idle');document.getElementById('stopPill').classList.remove('show');};
+    document.getElementById('stopPill').classList.add('show');
+    await curAu.play();
+    if(curAv)curAv.classList.add('sp');
+  }catch(e){console.warn('EL failed, using browser TTS:',e);spkBr(txt);}
+}
+
+function spkBr(txt){
+  const sy=window.speechSynthesis;sy.cancel();
+  const u=new SpeechSynthesisUtterance(txt);
+  const vs=sy.getVoices();
+  for(const n of['Karen','Samantha','Victoria','Google Australian Female']){const v=vs.find(x=>x.name.includes(n));if(v){u.voice=v;break;}}
+  u.rate=0.93;u.pitch=0.96;u.volume=1;
+  u.onstart=()=>{setOrb('speaking');document.getElementById('stopPill').classList.add('show');if(curAv)curAv.classList.add('sp');};
+  u.onend=u.onerror=()=>{setOrb('idle');document.getElementById('stopPill').classList.remove('show');if(curAv)curAv.classList.remove('sp');};
+  if(isChrome){const t=setInterval(()=>{if(sy.speaking){sy.pause();sy.resume();}else clearInterval(t);},9000);}
+  sy.speak(u);
+}
+
+function stopSpk(){
+  window.speechSynthesis.cancel();
+  if(curAu){curAu.pause();curAu=null;}
+  setOrb('idle');document.getElementById('stopPill').classList.remove('show');
+  if(curAv)curAv.classList.remove('sp');
+}
+
+function setOrb(s){
+  const orb=document.getElementById('orb');
+  const mb=document.getElementById('micB');
+  const wb=document.getElementById('wbs');
+  const dst=document.getElementById('dstTxt');const dsub=document.getElementById('dsubTxt');
+  if(orb){orb.className='orb';if(s==='ls')orb.classList.add('ls');if(s==='sp')orb.classList.add('sp');}
+  if(wb)wb.classList.toggle('show',s==='ls'||s==='sp'||s==='speaking'||s==='listening');
+  const map={listening:{orb:'ls',dst:'Listening...',sub:'Speak now',mic:'⏹'},thinking:{orb:'',dst:'Thinking...',sub:'Just a sec...',mic:'🎙'},speaking:{orb:'sp',dst:'Speaking',sub:"Matilda's talking",mic:'🎙'},idle:{orb:'',dst:'Tap to speak',sub:'Matilda is ready',mic:'🎙'}};
+  const st=map[s]||map.idle;
+  if(orb){orb.className='orb';if(st.orb)orb.classList.add(st.orb);}
+  if(dst)dst.textContent=st.dst;if(dsub)dsub.textContent=st.sub;
+  if(mb){mb.textContent=st.mic;mb.className='mic-big'+(s==='listening'?' on':'');}
+}
+
+// ── Speech Rec ──
+function initRec(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){document.getElementById('micB').disabled=true;return;}
+  recog=new SR();recog.continuous=false;recog.interimResults=true;recog.lang='en-AU';
+  recog.onstart=()=>{isListen=true;setOrb('listening');document.getElementById('liveBar').classList.add('show');document.getElementById('liveBar').textContent='';document.getElementById('tbub').classList.remove('show');};
+  recog.onresult=(e)=>{
+    let in2='',fn='';
+    for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)fn+=e.results[i][0].transcript;else in2+=e.results[i][0].transcript;}
+    const lv=fn||in2;
+    document.getElementById('liveBar').textContent=lv?`"${lv}"`:'' ;
+    const tb=document.getElementById('tbub');if(tb){tb.textContent=lv?`"${lv}"`:'' ;if(lv)tb.classList.add('show');}
+    if(fn.trim()){document.getElementById('liveBar').classList.remove('show');stopLUI();proc(fn.trim());}
+  };
+  recog.onerror=(e)=>{stopLUI();if(e.error==='not-allowed')document.getElementById('micB').disabled=true;};
+  recog.onend=()=>stopLUI();
+}
+function stopLUI(){isListen=false;if(!curAu&&!window.speechSynthesis.speaking)setOrb('idle');document.getElementById('liveBar').classList.remove('show');}
+function togMic(){if(!recog){initRec();if(!recog)return;}if(isProc)return;if(isListen){recog.stop();return;}stopSpk();try{recog.start();}catch(e){}}
+
+// ── Claude ──
+async function callClaude(msg){
+  let ec='';
+  if(olToken&&emails.length)ec='\n\nOUTLOOK INBOX:\n'+emails.slice(0,10).map(e=>`- ${e.from?.emailAddress?.name||'?'}: ${e.subject} [${e.isRead?'read':'UNREAD'}] ${new Date(e.receivedDateTime).toLocaleDateString('en-AU')}`).join('\n');
+  hist.push({role:'user',content:msg});
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK.trim(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:280,system:SYS+ec,messages:hist})});
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
+  const d=await r.json();const rep=d.content[0].text;hist.push({role:'assistant',content:rep});return rep;
+}
+
+async function proc(txt){
+  if(!txt.trim()||isProc)return;
+  isProc=true;document.getElementById('sendB').disabled=true;
+  addMsg('user',txt);setOrb('thinking');showTyp();
+  // Switch to chat tab in passenger mode
+  const pv=document.getElementById('passV');
+  if(pv.classList.contains('show'))showSeg('chat');
+  let rep;
+  try{if(isDemo||!AK){await new Promise(r=>setTimeout(r,500+Math.random()*300));rep=gDR(txt);}else rep=await callClaude(txt);}
+  catch(e){rep='Connection issue: '+e.message;}
+  remTyp();addMsg('ai',rep);isProc=false;document.getElementById('sendB').disabled=false;
+  // Show last reply card on drive screen
+  const lb=document.getElementById('lastBox');const lt=document.getElementById('lastTxt');
+  if(lb&&lt){lt.textContent=rep;lb.classList.add('show');setTimeout(()=>lb.classList.remove('show'),12000);}
+  speakEL(rep);
+}
+
+function gt(){return new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});}
+function addMsg(r,t){
+  const c=document.getElementById('msgs');if(!c)return;
+  const d=document.createElement('div');d.className=`msg ${r}`;
+  const av=document.createElement('div');av.className=`mav ${r==='ai'?'ai':'usr'}`;av.textContent=r==='ai'?'M':'CB';
+  if(r==='ai')curAv=av;
+  const co=document.createElement('div');co.className='mc';
+  const b=document.createElement('div');b.className='mb';b.textContent=t;
+  const ti=document.createElement('div');ti.className='mt';ti.textContent=gt();
+  co.appendChild(b);co.appendChild(ti);d.appendChild(av);d.appendChild(co);c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+function showTyp(){const c=document.getElementById('msgs');if(!c)return;const d=document.createElement('div');d.className='msg ai';d.id='typ';const av=document.createElement('div');av.className='mav ai';av.textContent='M';const b=document.createElement('div');b.className='trow';b.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';d.appendChild(av);d.appendChild(b);c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function remTyp(){document.getElementById('typ')?.remove();}
+function doSend(){const i=document.getElementById('inp');const t=i.value.trim();if(!t)return;i.value='';agrow(i);proc(t);}
+function hkey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doSend();}}
+function agrow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+
+// ── Segment ──
+function showSeg(s){
+  document.getElementById('segE').className='seg-tab'+(s==='email'?' active':'');
+  document.getElementById('segC').className='seg-tab'+(s==='chat'?' active':'');
+  document.getElementById('emailV').style.display=s==='email'?'flex':'none';
+  document.getElementById('chatV').style.display=s==='chat'?'flex':'none';
+  if(s==='chat'){const m=document.getElementById('msgs');if(m)setTimeout(()=>m.scrollTop=m.scrollHeight,50);}
+}
+
+// ── Outlook ──
+function connectOutlook(){
+  const popup=window.open(`${BACKEND}/api/auth/login`,'vox-auth','width=480,height=640,scrollbars=yes,resizable=yes');
+  if(!popup){alert('Please allow popups for this site to connect Outlook.');return;}
+  const poll=setInterval(()=>{
+    try{
+      if(popup?.location?.href?.includes('auth=success')){
+        const url=new URL(popup.location.href);
+        const token=url.searchParams.get('token');
+        const email=url.searchParams.get('email');
+        if(token){popup.close();clearInterval(poll);onOutlookOk(token,decodeURIComponent(email||''));}
+      }
+      if(popup?.location?.href?.includes('auth=error')){popup.close();clearInterval(poll);alert('Microsoft login failed. Please check your Vercel environment variables and try again.');}
+    }catch(e){}
+    if(popup?.closed)clearInterval(poll);
+  },800);
+  setTimeout(()=>clearInterval(poll),120000);
+}
+
+function onOutlookOk(token,email){
+  olToken=token;olEmail=email;
+  const oc=document.getElementById('oChip');
+  oc.textContent=`📧 ${email.split('@')[0]}`;oc.classList.add('outon');
+  document.getElementById('connectB').style.display='none';
+  document.getElementById('refreshB').style.display='inline-flex';
+  document.getElementById('askB').style.display='inline-flex';
+  document.getElementById('inboxTitle').textContent=`${email.split('@')[0]}'s Inbox`;
+  loadEmails();
+  addMsg('ai',`Connected to ${email}! Loading your inbox now...`);
+  speakEL(`Connected! Loading your Outlook inbox.`);
+}
+
+async function loadEmails(){
+  if(!olToken)return;
+  const list=document.getElementById('elist');
+  list.innerHTML='<div style="padding:40px;display:flex;justify-content:center"><div class="spin"></div></div>';
+  try{
+    const r=await fetch(`${BACKEND}/api/emails`,{headers:{Authorization:`Bearer ${olToken}`}});
+    if(r.status===401){olToken='';list.innerHTML='<div class="no-email"><p>Session expired. Tap Connect to reconnect Outlook.</p></div>';return;}
+    if(!r.ok)throw new Error('Failed '+r.status);
+    emails=await r.json();
+    if(emails.error){list.innerHTML=`<div class="no-email"><p>Error loading emails: ${esc(emails.error)}</p></div>`;return;}
+    renderEmails();
+    if(AK&&!isDemo&&emails.length>0){
+      const unread=emails.filter(e=>!e.isRead).length;
+      proc(`Just loaded my Outlook inbox — ${emails.length} emails, ${unread} unread. Give me a quick 2-sentence briefing on what needs my attention today.`);
+    }
+  }catch(e){list.innerHTML=`<div class="no-email"><p>Could not load emails: ${esc(e.message)}</p></div>`;}
+}
+
+function renderEmails(){
+  const list=document.getElementById('elist');list.innerHTML='';
+  emails.forEach((e,i)=>{
+    const div=document.createElement('div');
+    div.className=`eitem${!e.isRead?' unread':''}`;
+    const from=e.from?.emailAddress?.name||e.from?.emailAddress?.address||'Unknown';
+    const ini=from.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const time=new Date(e.receivedDateTime).toLocaleString('en-AU',{hour:'2-digit',minute:'2-digit',month:'short',day:'numeric'});
+    if(!e.isRead){const dot=document.createElement('div');dot.className='udot';div.appendChild(dot);}
+    div.innerHTML+=`
+      <div class="eavatar" style="background:${COLORS[i%COLORS.length]}">${ini}</div>
+      <div class="einfo">
+        <div class="etop">
+          <div class="esend">${esc(from)}</div>
+          <div class="etime">${time}</div>
+        </div>
+        <div class="esubj">${esc(e.subject||'(No subject)')}</div>
+        <div class="eprev">${esc((e.bodyPreview||'').substring(0,60))}</div>
+      </div>`;
+    div.onclick=()=>openEmail(i);
+    list.appendChild(div);
+  });
+}
+
+function openEmail(idx){
+  const e=emails[idx];if(!e)return;
+  const from=e.from?.emailAddress?.name||'Unknown';
+  const addr=e.from?.emailAddress?.address||'';
+  const time=new Date(e.receivedDateTime).toLocaleString('en-AU',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const ini=from.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('epaneBody').innerHTML=`
+    <div class="eread-subj">${esc(e.subject||'(No subject)')}</div>
+    <div class="eread-meta">
+      <div class="eread-av" style="background:${COLORS[idx%COLORS.length]}">${ini}</div>
+      <div style="flex:1;min-width:0">
+        <div class="eread-from">${esc(from)}</div>
+        <div class="eread-addr">${esc(addr)}</div>
+      </div>
+      <div class="eread-time">${time}</div>
+    </div>
+    <div class="ediv"></div>
+    <div class="eread-body">${esc(e.bodyPreview||'')}</div>
+    <div class="eread-acts">
+      <button class="era-btn prim" onclick="proc('Draft a professional reply to this email from ${esc(from)} regarding: ${esc(e.subject||'')}')">✨ Draft Reply</button>
+      <button class="era-btn" onclick="proc('Summarise this email from ${esc(from)}: ${esc(e.subject||'')}')">📝 Summarise</button>
+      <button class="era-btn" onclick="speakEL('Email from ${esc(from)}. Subject: ${esc(e.subject||'')}. ${esc((e.bodyPreview||'').substring(0,200))}')">🔊 Read Aloud</button>
+    </div>`;
+  document.getElementById('epane').classList.add('show');
+}
+
+function closePane(){document.getElementById('epane').classList.remove('show');}
+
+function askEmails(){
+  const unread=emails.filter(e=>!e.isRead).length;
+  showSeg('chat');
+  proc(`Give me a briefing on my Outlook inbox — ${emails.length} emails, ${unread} unread. What needs my attention?`);
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── Mode switching ──
+function setMode(m,btn){
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const dv=document.getElementById('driveV');const pv=document.getElementById('passV');
+  if(m==='drive'){
+    dv.classList.add('show');dv.style.display='';
+    pv.classList.remove('show');pv.style.display='none';
+    proc("I'm in drive mode. Quick 2-sentence Adelaide commute briefing please.");
+  }else{
+    dv.classList.remove('show');dv.style.display='none';
+    pv.classList.add('show');pv.style.display='flex';
+    showSeg('email');
+    if(m==='passenger')proc("Switching to passenger mode. What do you need?");
+    if(m==='parked'){showSeg('chat');proc("Parked up! What can I help you sort out?");}
+  }
+}
+
+// ── Setup flow ──
+function chkD(){
+  const ok=document.getElementById('dc').checked;
+  ['cb','db'].forEach(id=>{const el=document.getElementById(id);el.disabled=!ok;el.style.opacity=ok?'1':'0.4';});
+}
+function doConnect(){
+  const a=document.getElementById('ak').value.trim();const e=document.getElementById('ek').value.trim();let ok=true;
+  if(!a.startsWith('sk-')){document.getElementById('ae').classList.add('show');ok=false;}else document.getElementById('ae').classList.remove('show');
+  if(!e){document.getElementById('ee').classList.add('show');ok=false;}else document.getElementById('ee').classList.remove('show');
+  if(!ok)return;
+  AK=a;EK=e;
+  document.getElementById('cChip').textContent='✦ Claude';document.getElementById('cChip').classList.add('live');
+  document.getElementById('eChip').textContent='🎙 Matilda';document.getElementById('eChip').classList.add('elon');
+  goMic();
+}
+function doDemo(){isDemo=true;goMic();}
+function goMic(){
+  const s=new SpeechSynthesisUtterance('');s.volume=0;window.speechSynthesis.speak(s);
+  document.getElementById('setup').classList.add('gone');
+  document.getElementById('micOv').classList.remove('gone');
+  if(isSaf&&isIOS)document.getElementById('safStp').style.display='block';
+  else if(isChrome)document.getElementById('chrStp').style.display='block';
+}
+function reqMic(){
+  document.getElementById('ambtn').textContent='Requesting...';
+  navigator.mediaDevices.getUserMedia({audio:true})
+    .then(s=>{s.getTracks().forEach(t=>t.stop());hasMic=true;initRec();launch();})
+    .catch(()=>{hasMic=false;launch();});
+}
+function skipMic(){hasMic=false;if(!recog)initRec();launch();}
+function launch(){
+  document.getElementById('micOv').classList.add('gone');
+  document.getElementById('app').classList.remove('hidden');
+  checkOAuth();
+  setTimeout(()=>{
+    const g=isDemo
+      ?"G'day! I'm Matilda, your Voxride AI. Tap the mic button or type to chat with me. Switch to Passenger Mode to connect your Outlook emails!"
+      :"G'day Chris! I'm Matilda — all set up and ready for your commute. Tap the big mic button to speak, or type below. Switch to Passenger Mode to connect your Outlook!";
+    setOrb('speaking');speakEL(g);
+    const tb=document.getElementById('tbub');if(tb){tb.textContent=`"${g.substring(0,80)}..."`;tb.classList.add('show');setTimeout(()=>tb.classList.remove('show'),9000);}
+  },600);
+}
+function checkOAuth(){
+  const p=new URLSearchParams(window.location.search);
+  if(p.get('auth')==='success'){
+    const token=p.get('token');const email=p.get('email');
+    if(token){
+      history.replaceState({},document.title,window.location.pathname);
+      setTimeout(()=>{setMode('passenger',document.getElementById('nbPass'));onOutlookOk(token,decodeURIComponent(email||''));},1000);
+    }
+  }
+  if(p.get('auth')==='error'){
+    history.replaceState({},document.title,window.location.pathname);
+    addMsg('ai','Microsoft login failed. Please check your Vercel environment variables — the MICROSOFT_CLIENT_SECRET may need updating.');
+  }
+}
+</script>
+</body>
+</html>
